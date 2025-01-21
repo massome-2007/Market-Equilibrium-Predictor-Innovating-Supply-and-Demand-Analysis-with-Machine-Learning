@@ -1,0 +1,58 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
+# Simulate supply and demand data
+np.random.seed(42)
+prices = np.linspace(1, 100, 100)
+demand_quantities = 200 - prices + np.random.normal(0, 10, 100)  # Demand curve: Qd = a - bP
+supply_quantities = prices - 50 + np.random.normal(0, 10, 100)   # Supply curve: Qs = c + dP
+
+# Create DataFrame
+data = pd.DataFrame({
+    'Price': prices,
+    'DemandQuantity': demand_quantities,
+    'SupplyQuantity': supply_quantities
+})
+
+# Define features and target variable
+X = data[['Price']]
+y_demand = data['DemandQuantity']
+y_supply = data['SupplyQuantity']
+
+# Split data into training and testing sets
+X_train, X_test, y_train_demand, y_test_demand = train_test_split(X, y_demand, test_size=0.2, random_state=42)
+_, _, y_train_supply, y_test_supply = train_test_split(X, y_supply, test_size=0.2, random_state=42)
+
+# Train linear regression models for demand and supply
+model_demand = LinearRegression()
+model_supply = LinearRegression()
+model_demand.fit(X_train, y_train_demand)
+model_supply.fit(X_train, y_train_supply)
+
+# Predict quantities for test set prices
+predicted_demand = model_demand.predict(X_test)
+predicted_supply = model_supply.predict(X_test)
+
+# Find equilibrium price and quantity
+equilibrium_price = X_test.iloc[(abs(predicted_demand - predicted_supply)).argmin()]['Price']
+equilibrium_quantity = model_demand.predict([[equilibrium_price]])[0]
+
+# Plotting results
+plt.figure(figsize=(12, 6))
+plt.scatter(prices, demand_quantities, color='blue', label='Demand')
+plt.scatter(prices, supply_quantities, color='red', label='Supply')
+plt.plot(X_test, predicted_demand, color='blue', linestyle='--', label='Predicted Demand')
+plt.plot(X_test, predicted_supply, color='red', linestyle='--', label='Predicted Supply')
+plt.axvline(equilibrium_price, color='green', linestyle='--', label='Equilibrium Price')
+plt.axhline(equilibrium_quantity, color='purple', linestyle='--', label='Equilibrium Quantity')
+plt.xlabel('Price')
+plt.ylabel('Quantity')
+plt.title('Supply and Demand Model with Equilibrium Prediction')
+plt.legend()
+plt.show()
+
+print(f"Equilibrium Price: {equilibrium_price:.2f}")
+print(f"Equilibrium Quantity: {equilibrium_quantity:.2f}")
